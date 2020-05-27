@@ -26,7 +26,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:lottie_autoPlay="true"
         android:layout_marginTop="330dp"
         android:layout_width="60pt"
         android:layout_height="60pt"

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -35,6 +36,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Url;
 import java.net.URL;
 
+import javax.xml.transform.Result;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -43,14 +45,14 @@ public class MainActivity extends AppCompatActivity {
     private static final int FILE_EXIST=1;
     private static final int FILE_DOWNLOAD_FAILED=0;
     private static final int FILE_DOWNLOAD_SUCCESS=2;
-    public float TimePiece;
+    public int TimePiece;
     public LottieAnimationView lottie;
     public List<VideoMessage> messageList;
     public List<VideoMessage> textlist;
     public Intent intent;
     public Bundle bundle;
     public Toast toast;
-    public DownLoadThread downLoadThread=new DownLoadThread();
+    public DownLoadThread downLoadThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         bundle=new Bundle();
+        downLoadThread=new DownLoadThread();
         lottie=(LottieAnimationView) findViewById(R.id.progress);
         intent=new Intent(this,ViewPagerActivity.class);
         RetrofitVideo retrofitVideo=retrofit.create(RetrofitVideo.class);
@@ -70,19 +73,11 @@ public class MainActivity extends AppCompatActivity {
                 messageList=response.body();
 //                Log.d(TAG,"get json success:" + messageList.toString());
                 if (messageList != null) {
-                    TimePiece=1f/(2*messageList.size());
+                    TimePiece=100/(2*messageList.size());
                 }
                 bundle.putSerializable("key",(Serializable) messageList);
                 intent.putExtras(bundle);
-                try {
-                    downLoadThread.start();
-                    downLoadThread.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                toast=Toast.makeText(getApplicationContext(),"加载成功",Toast.LENGTH_LONG);
-               toast.show();
-                startActivity(intent);
+                downLoadThread.execute();
             }
 
             @Override
@@ -177,11 +172,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class DownLoadThread extends Thread{
+    private class DownLoadThread extends AsyncTask<String, Integer, String>{
+
         @Override
-        public void run() {
-            super.run();
-            float count_download=0;
+        protected String doInBackground(String... strings) {
+            int count_download=0;
             for(int i=0;i<messageList.size();i++)
             {
                 switch (downloadmp4(messageList.get(i))){
@@ -191,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
                     case FILE_DOWNLOAD_SUCCESS:
                         Log.d(TAG,"视频下载成功："+messageList.get(i).getVideoUrl());
                         count_download=count_download+1;
-                        lottie.setProgress(0.5f);
+                        publishProgress(count_download*TimePiece);
                         break;
                     case FILE_DOWNLOAD_FAILED:
                         Log.d(TAG,"视频下载失败："+messageList.get(i).getVideoUrl());
@@ -204,13 +199,35 @@ public class MainActivity extends AppCompatActivity {
                     case FILE_DOWNLOAD_SUCCESS:
                         Log.d(TAG,"图片下载成功："+messageList.get(i).getAvatorUrl());
                         count_download=count_download+1;
-                        lottie.setProgress(count_download*TimePiece);
+                        publishProgress(count_download*TimePiece);
                         break;
                     case FILE_DOWNLOAD_FAILED:
                         Log.d(TAG,"图片下载失败："+messageList.get(i).getAvatorUrl());
                         break;
                 }
             }
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            toast=Toast.makeText(getApplicationContext(),"开始下载",Toast.LENGTH_SHORT);
+            toast.show();
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            toast=Toast.makeText(getApplicationContext(),"下载成功",Toast.LENGTH_SHORT);
+            toast.show();
+            startActivity(intent);
+            super.onPostExecute(s);
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            lottie.setProgress(values[0]/100f);
+            super.onProgressUpdate(values);
         }
     }
 

@@ -61,11 +61,6 @@ public class ViewPagerActivity extends AppCompatActivity {
                     case ViewPager2.SCROLL_STATE_IDLE:
                         break;
                     case ViewPager2.SCROLL_STATE_SETTLING:
-//                        currentpostion=viewPager2.getCurrentItem();
-//                        ImageView imageView=viewPagerAdapter.pagerViewHolderList.get(currentpostion).f1pic;
-//                        imageView.setVisibility(View.VISIBLE);
-//                        videoView=viewPagerAdapter.pagerViewHolderList.get(currentpostion).videoView;
-//                        videoView.setVisibility(View.INVISIBLE);
                         break;
                 }
             }
